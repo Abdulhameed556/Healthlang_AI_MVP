@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You're invited to {{ app_name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:system-ui,-apple-system,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:8px;padding:32px;">
+          <tr>
+            <td>
+              <h1 style="margin:0 0 16px;font-size:22px;color:#111827;">You're invited</h1>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#374151;">
+                You have been invited to join <strong>{{ department_name }}</strong> on <strong>{{ app_name }}</strong>.
+              </p>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.5;color:#374151;">
+                Click the button below to accept your invitation. This link expires in {{ expire_hours }} hours.
+              </p>
+              <a href="{{ invitation_link }}"
+                 style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:6px;">
+                Accept invitation
+              </a>
+              <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#6b7280;">
+                Or copy this link into your browser:<br />
+                <a href="{{ invitation_link }}" style="color:#2563eb;word-break:break-all;">{{ invitation_link }}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,35 @@
+[
+  {
+    "_comment": "Replace expected_scenario_ids with real UUIDs from your agent's scenario config.",
+    "query": "I sent money 3 hours ago and it hasn't arrived",
+    "expected_scenario_ids": ["REPLACE_WITH_REAL_SCENARIO_UUID"]
+  },
+  {
+    "query": "How do I verify my identity?",
+    "expected_scenario_ids": ["REPLACE_WITH_REAL_SCENARIO_UUID"]
+  },
+  {
+    "query": "What are your transfer fees?",
+    "expected_scenario_ids": ["REPLACE_WITH_REAL_SCENARIO_UUID"]
+  },
+  {
+    "query": "Can I cancel a transaction I just made?",
+    "expected_scenario_ids": ["REPLACE_WITH_REAL_SCENARIO_UUID"]
+  },
+  {
+    "query": "My account has been locked",
+    "expected_scenario_ids": ["REPLACE_WITH_REAL_SCENARIO_UUID"]
+  },
+  {
+    "query": "What currencies can I send to?",
+    "expected_scenario_ids": ["REPLACE_WITH_REAL_SCENARIO_UUID"]
+  },
+  {
+    "query": "Hello",
+    "expected_scenario_ids": []
+  },
+  {
+    "query": "Thank you, goodbye",
+    "expected_scenario_ids": []
+  }
+]

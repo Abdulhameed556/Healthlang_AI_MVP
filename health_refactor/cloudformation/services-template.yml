@@ -1,0 +1,674 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: "AWS::Serverless-2016-10-31"
+Description: Infrastructure for SupportOS Backend
+
+Parameters:
+  Env:
+    Description: The environment (dev, test, prod etc.) Used as resource names and tags
+    Type: String
+  ProjectId:
+    Description: The unique id or name of this project. Used in resource names and tags
+    Type: String
+    Default: supportos
+  OrgId:
+    Description: The unique id or name of this organization. Used in referencing shared resources like the ALB security group
+    Type: String
+    Default: "afriex"
+  BackendImage:
+    Type: String
+    Description: The full image:tag for the image to push to the task
+  DefaultDesiredTaskCount:
+    Type: Number
+    Description: The number of ecs tasks to run by default (before scaling kicks in)
+    Default: 1
+  ListenerRulePriority:
+    Type: Number
+    Description: The priority of the listener rule
+    Default: 1
+  DomainName:
+    Type: String
+    Description: The domain name of the service
+  ParameterStoreNamePrefix:
+    Type: String
+    Description: The prefix for the parameter store.
+    Default: supportos
+  # SecretsArn:
+  #   Type: String
+  #   Description: Secrets ARN 
+
+# Conditions:
+#   IsDev: !Equals [!Ref Env, "dev"]
+
+Resources:
+  FargateExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: [sts:AssumeRole]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: TaskRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "logs:CreateLog*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "ssmmessages:CreateControlChannel"
+                  - "ssmmessages:CreateDataChannel"
+                  - "ssmmessages:OpenControlChannel"
+                  - "ssmmessages:OpenDataChannel"
+                  - "ssm:GetParameters"
+                Resource: "*"
+              - Effect: Allow
+                Action: "secretsmanager:*"
+                Resource: "*"
+              - Effect: Allow
+                Action: "kms:Decrypt"
+                Resource: "*"
+
+  FargateTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: [sts:AssumeRole]
+      Policies:
+        - PolicyName: TaskRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "logs:CreateLogStream"
+                Resource: "*"
+              - Effect: Allow
+                Action: "logs:PutLogEvents"
+                Resource: "*"
+              - Effect: Allow
+                Action: "ssm:*"
+                Resource: "*"
+              - Effect: Allow
+                Action: "secretsmanager:*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "ssmmessages:CreateControlChannel"
+                  - "ssmmessages:CreateDataChannel"
+                  - "ssmmessages:OpenControlChannel"
+                  - "ssmmessages:OpenDataChannel"
+                Resource: "*"
+              - Effect: Allow
+                Action: "kms:Decrypt"
+                Resource: "*"
+
+  FargateCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${ProjectId}-${Env}"
+      CapacityProviders:
+        - FARGATE
+      ServiceConnectDefaults:
+        Namespace: !Sub "${ProjectId}-${Env}"
+
+  BackendTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ProjectId}-${Env}-backend
+      Cpu: "2048"             # You can specify "256", "512", "1024", etc.
+      Memory: "4096"          # You can specify "512", "1024", "2048", etc.
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt FargateExecutionRole.Arn
+      TaskRoleArn: !GetAtt FargateTaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub "${ProjectId}-${Env}"
+          Image: !Ref BackendImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8000
+              Name: api
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)\""
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+          Environment:
+            - Name: APP_ENV
+              Value: !Ref Env
+            - Name: APP_PORT
+              Value: "8000"
+            - Name: PORT
+              Value: "8000"
+          Secrets:
+            - Name: APP_NAME
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/APP_NAME"
+            - Name: APP_SLUG
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/APP_SLUG"
+            - Name: APP_DEBUG
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/APP_DEBUG"
+            - Name: LOG_LEVEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/LOG_LEVEL"
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_URL"
+            - Name: DATABASE_SQL_ECHO
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_SQL_ECHO"
+            - Name: DATABASE_POOL_PRE_PING
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_POOL_PRE_PING"
+            - Name: DATABASE_POOL_RECYCLE
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_POOL_RECYCLE"
+            - Name: DATABASE_POOL_SIZE
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_POOL_SIZE"
+            - Name: DATABASE_MAX_OVERFLOW
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_MAX_OVERFLOW"
+            - Name: REDIS_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/REDIS_URL"
+            - Name: JWT_SECRET_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_SECRET_KEY"
+            - Name: JWT_ALGORITHM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_ALGORITHM"
+            - Name: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+            - Name: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_REFRESH_TOKEN_EXPIRE_DAYS"
+            - Name: API_TOOL_SECRETS_ENCRYPTION_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/API_TOOL_SECRETS_ENCRYPTION_KEY"
+            - Name: STORAGE_BACKEND
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/STORAGE_BACKEND"
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AWS_ACCESS_KEY_ID"
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AWS_SECRET_ACCESS_KEY"
+            - Name: AWS_S3_BUCKET
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AWS_S3_BUCKET"
+            - Name: EMAIL_PROVIDER
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/EMAIL_PROVIDER"
+            - Name: EMAIL_FROM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/EMAIL_FROM"
+            - Name: MAILGUN_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/MAILGUN_API_KEY"
+            - Name: MAILGUN_DOMAIN
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/MAILGUN_DOMAIN"
+            - Name: MAILGUN_API_BASE
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/MAILGUN_API_BASE"
+            - Name: SMTP_HOST
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_HOST"
+            - Name: SMTP_PORT
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_PORT"
+            - Name: SMTP_USER
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_USER"
+            - Name: SMTP_PASSWORD
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_PASSWORD"
+            - Name: PRODUCT_APP_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PRODUCT_APP_BASE_URL"
+            - Name: INVITATION_EXPIRE_HOURS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/INVITATION_EXPIRE_HOURS"
+            - Name: PASSWORD_RESET_EXPIRE_HOURS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PASSWORD_RESET_EXPIRE_HOURS"
+            - Name: CORS_ORIGINS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/CORS_ORIGINS"
+            - Name: GOOGLE_CLIENT_ID
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_CLIENT_ID"
+            - Name: GOOGLE_CLIENT_SECRET
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_CLIENT_SECRET"
+            - Name: GOOGLE_REDIRECT_URI
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_REDIRECT_URI"
+            - Name: AI_SERVICE_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AI_SERVICE_BASE_URL"
+            - Name: AI_SERVICE_INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AI_SERVICE_INTERNAL_API_KEY"
+            - Name: ADMIN_INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_INTERNAL_API_KEY"
+            - Name: API_PUBLIC_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/API_PUBLIC_BASE_URL"
+            - Name: FRESHCHAT_WEBHOOK_PUBLIC_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_WEBHOOK_PUBLIC_KEY"
+            - Name: FRESHCHAT_HANDOFF_STATUS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_HANDOFF_STATUS"
+            - Name: FRESHCHAT_HANDOFF_RELEASE_ACTIONS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_HANDOFF_RELEASE_ACTIONS"
+            - Name: FRESHCHAT_RESOLVE_STATUS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_RESOLVE_STATUS"
+            - Name: ENABLE_IMAGE_ATTACHMENTS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ENABLE_IMAGE_ATTACHMENTS"
+            - Name: ADMIN_JWT_SECRET_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_JWT_SECRET_KEY"
+            - Name: ADMIN_JWT_ALGORITHM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_JWT_ALGORITHM"
+            - Name: ADMIN_JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+            - Name: ADMIN_EMAIL_FROM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_EMAIL_FROM"
+            - Name: BACKEND_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/BACKEND_BASE_URL"
+            - Name: BACKEND_INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/BACKEND_INTERNAL_API_KEY"
+            - Name: INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/INTERNAL_API_KEY"
+            - Name: OPENAI_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/OPENAI_API_KEY"
+            - Name: ANTHROPIC_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ANTHROPIC_API_KEY"
+            - Name: GROQ_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GROQ_API_KEY"
+            - Name: GOOGLE_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_API_KEY"
+            - Name: DEFAULT_LLM_PROVIDER
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_LLM_PROVIDER"
+            - Name: DEFAULT_CHAT_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_CHAT_MODEL"
+            - Name: DEFAULT_VOICE_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_VOICE_MODEL"
+            - Name: DEFAULT_JUDGE_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_JUDGE_MODEL"
+            - Name: DEFAULT_EMBEDDING_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_EMBEDDING_MODEL"
+            - Name: VECTOR_STORE_BACKEND
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/VECTOR_STORE_BACKEND"
+            - Name: VECTOR_STORE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/VECTOR_STORE_URL"
+            - Name: PINECONE_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PINECONE_API_KEY"
+            - Name: PINECONE_INDEX_NAME
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PINECONE_INDEX_NAME"
+            - Name: DRAMATIQ_BROKER_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DRAMATIQ_BROKER_URL"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-create-group: true
+              awslogs-group: !Sub /ecs/${ProjectId}-${Env}/backend
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          LinuxParameters:
+            InitProcessEnabled: true
+          
+  DramatiqTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ProjectId}-${Env}-dramatiq
+      Cpu: "2048"             # You can specify "256", "512", "1024", etc.
+      Memory: "4096"          # You can specify "512", "1024", "2048", etc.
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt FargateExecutionRole.Arn
+      TaskRoleArn: !GetAtt FargateTaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub "${ProjectId}-${Env}-dramatiq"
+          Image: !Ref BackendImage
+          Essential: true
+          EntryPoint:
+            - /bin/sh
+            - -c
+          Command:
+            - "PYTHONPATH=. dramatiq ai.src.infrastructure.workers.worker --processes 1 --threads 8"
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "echo ok"
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+          Environment:
+            - Name: APP_ENV
+              Value: !Ref Env
+            - Name: DATABASE_USE_NULL_POOL
+              Value: "true"
+          Secrets:
+            - Name: APP_NAME
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/APP_NAME"
+            - Name: APP_SLUG
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/APP_SLUG"
+            - Name: APP_DEBUG
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/APP_DEBUG"
+            - Name: LOG_LEVEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/LOG_LEVEL"
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_URL"
+            - Name: DATABASE_SQL_ECHO
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_SQL_ECHO"
+            - Name: DATABASE_POOL_PRE_PING
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_POOL_PRE_PING"
+            - Name: DATABASE_POOL_RECYCLE
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_POOL_RECYCLE"
+            - Name: DATABASE_POOL_SIZE
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_POOL_SIZE"
+            - Name: DATABASE_MAX_OVERFLOW
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_MAX_OVERFLOW"
+            - Name: REDIS_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/REDIS_URL"
+            - Name: JWT_SECRET_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_SECRET_KEY"
+            - Name: JWT_ALGORITHM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_ALGORITHM"
+            - Name: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+            - Name: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_REFRESH_TOKEN_EXPIRE_DAYS"
+            - Name: API_TOOL_SECRETS_ENCRYPTION_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/API_TOOL_SECRETS_ENCRYPTION_KEY"
+            - Name: STORAGE_BACKEND
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/STORAGE_BACKEND"
+            - Name: AWS_ACCESS_KEY_ID
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AWS_ACCESS_KEY_ID"
+            - Name: AWS_SECRET_ACCESS_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AWS_SECRET_ACCESS_KEY"
+            - Name: AWS_S3_BUCKET
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AWS_S3_BUCKET"
+            - Name: EMAIL_PROVIDER
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/EMAIL_PROVIDER"
+            - Name: EMAIL_FROM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/EMAIL_FROM"
+            - Name: MAILGUN_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/MAILGUN_API_KEY"
+            - Name: MAILGUN_DOMAIN
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/MAILGUN_DOMAIN"
+            - Name: MAILGUN_API_BASE
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/MAILGUN_API_BASE"
+            - Name: SMTP_HOST
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_HOST"
+            - Name: SMTP_PORT
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_PORT"
+            - Name: SMTP_USER
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_USER"
+            - Name: SMTP_PASSWORD
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/SMTP_PASSWORD"
+            - Name: PRODUCT_APP_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PRODUCT_APP_BASE_URL"
+            - Name: INVITATION_EXPIRE_HOURS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/INVITATION_EXPIRE_HOURS"
+            - Name: PASSWORD_RESET_EXPIRE_HOURS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PASSWORD_RESET_EXPIRE_HOURS"
+            - Name: CORS_ORIGINS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/CORS_ORIGINS"
+            - Name: GOOGLE_CLIENT_ID
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_CLIENT_ID"
+            - Name: GOOGLE_CLIENT_SECRET
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_CLIENT_SECRET"
+            - Name: GOOGLE_REDIRECT_URI
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_REDIRECT_URI"
+            - Name: AI_SERVICE_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AI_SERVICE_BASE_URL"
+            - Name: AI_SERVICE_INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/AI_SERVICE_INTERNAL_API_KEY"
+            - Name: ADMIN_INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_INTERNAL_API_KEY"
+            - Name: API_PUBLIC_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/API_PUBLIC_BASE_URL"
+            - Name: FRESHCHAT_WEBHOOK_PUBLIC_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_WEBHOOK_PUBLIC_KEY"
+            - Name: FRESHCHAT_HANDOFF_STATUS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_HANDOFF_STATUS"
+            - Name: FRESHCHAT_HANDOFF_RELEASE_ACTIONS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_HANDOFF_RELEASE_ACTIONS"
+            - Name: FRESHCHAT_RESOLVE_STATUS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/FRESHCHAT_RESOLVE_STATUS"
+            - Name: ENABLE_IMAGE_ATTACHMENTS
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ENABLE_IMAGE_ATTACHMENTS"
+            - Name: ADMIN_JWT_SECRET_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_JWT_SECRET_KEY"
+            - Name: ADMIN_JWT_ALGORITHM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_JWT_ALGORITHM"
+            - Name: ADMIN_JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+            - Name: ADMIN_EMAIL_FROM
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ADMIN_EMAIL_FROM"
+            - Name: BACKEND_BASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/BACKEND_BASE_URL"
+            - Name: BACKEND_INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/BACKEND_INTERNAL_API_KEY"
+            - Name: INTERNAL_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/INTERNAL_API_KEY"
+            - Name: OPENAI_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/OPENAI_API_KEY"
+            - Name: ANTHROPIC_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/ANTHROPIC_API_KEY"
+            - Name: GROQ_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GROQ_API_KEY"
+            - Name: GOOGLE_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/GOOGLE_API_KEY"
+            - Name: DEFAULT_LLM_PROVIDER
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_LLM_PROVIDER"
+            - Name: DEFAULT_CHAT_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_CHAT_MODEL"
+            - Name: DEFAULT_VOICE_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_VOICE_MODEL"
+            - Name: DEFAULT_JUDGE_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_JUDGE_MODEL"
+            - Name: DEFAULT_EMBEDDING_MODEL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DEFAULT_EMBEDDING_MODEL"
+            - Name: VECTOR_STORE_BACKEND
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/VECTOR_STORE_BACKEND"
+            - Name: VECTOR_STORE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/VECTOR_STORE_URL"
+            - Name: PINECONE_API_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PINECONE_API_KEY"
+            - Name: PINECONE_INDEX_NAME
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/PINECONE_INDEX_NAME"
+            - Name: DRAMATIQ_BROKER_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DRAMATIQ_BROKER_URL"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-create-group: true
+              awslogs-group: !Sub /ecs/${ProjectId}-${Env}/dramatiq
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          LinuxParameters:
+            InitProcessEnabled: true
+
+  MigrateTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ProjectId}-${Env}-migrate
+      Cpu: "512"
+      Memory: "1024"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt FargateExecutionRole.Arn
+      TaskRoleArn: !GetAtt FargateTaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub "${ProjectId}-${Env}-migrate"
+          Image: !Ref BackendImage
+          Essential: true
+          EntryPoint:
+            - /bin/sh
+            - -c
+          Command:
+            - "PYTHONPATH=. alembic -c backend/src/infrastructure/database/migrations/alembic.ini upgrade head"
+          Environment:
+            - Name: APP_ENV
+              Value: !Ref Env
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/DATABASE_URL"
+            - Name: JWT_SECRET_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/JWT_SECRET_KEY"
+            - Name: API_TOOL_SECRETS_ENCRYPTION_KEY
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ParameterStoreNamePrefix}/${Env}/API_TOOL_SECRETS_ENCRYPTION_KEY"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-create-group: true
+              awslogs-group: !Sub /ecs/${ProjectId}-${Env}/migrate
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          LinuxParameters:
+            InitProcessEnabled: true
+          
+  BackEndService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - FargateCluster
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 1
+        MaxBatchSize: 1
+        PauseTime: PT0S
+    Properties:
+      Cluster: !Ref FargateCluster
+      ServiceName: !Sub "${ProjectId}-${Env}-backend"
+      TaskDefinition: !Ref BackendTaskDefinition
+      DesiredCount: !Ref DefaultDesiredTaskCount
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      LoadBalancers:
+        - ContainerName: !Sub ${ProjectId}-${Env}
+          ContainerPort: 8000
+          TargetGroupArn: !Ref BackEndTargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - "{{resolve:ssm:/devops/private-subnet-1}}"
+            - "{{resolve:ssm:/devops/private-subnet-2}}"
+            - "{{resolve:ssm:/devops/private-subnet-3}}"
+          SecurityGroups:
+            - !Ref FargateServiceSecurityGroup
+
+  DramatiqService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - FargateCluster
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 1
+        MaxBatchSize: 1
+        PauseTime: PT0S
+    Properties:
+      Cluster: !Ref FargateCluster
+      ServiceName: !Sub "${ProjectId}-${Env}-dramatiq"
+      TaskDefinition: !Ref DramatiqTaskDefinition
+      DesiredCount: !Ref DefaultDesiredTaskCount
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 120
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - "{{resolve:ssm:/devops/private-subnet-1}}"
+            - "{{resolve:ssm:/devops/private-subnet-2}}"
+            - "{{resolve:ssm:/devops/private-subnet-3}}"
+          SecurityGroups:
+            - !Ref DramatiqFargateServiceSecurityGroup
+  
+  FargateServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Backend Fargate services
+      VpcId: "{{resolve:ssm:/devops/vpc-id}}"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          SourceSecurityGroupId: 
+            Fn::ImportValue: !Sub '${OrgId}-AlbSecurityGroupId'
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+  DramatiqFargateServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Dramatiq Fargate services
+      VpcId: "{{resolve:ssm:/devops/vpc-id}}"
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+  MigrateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access for one-off database migration ECS tasks
+      VpcId: "{{resolve:ssm:/devops/vpc-id}}"
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+  BackEndTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 8000
+      Protocol: HTTP
+      VpcId: "{{resolve:ssm:/devops/vpc-id}}"
+      TargetType: ip
+      HealthCheckPath: "/api/v1/health"
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200
+
+  BackendListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackEndTargetGroup
+      Conditions:
+        - Field: host-header
+          Values:
+            - !Ref DomainName
+      ListenerArn:
+        Fn::ImportValue: !Sub '${OrgId}-TlsListenerArn'
+      Priority: !Ref ListenerRulePriority
+# Outputs for ECS cluster (used by one-off migrate tasks, etc.)
+Outputs:
+  ECSClusterArn:
+    Description: "ARN of the ECS Cluster"
+    Value: !Ref FargateCluster
+    Export:
+      Name: !Sub "${ProjectId}-${Env}-ClusterArn"
+  
+  ECSClusterName:
+    Description: "Name of the ECS Cluster"
+    Value: !Ref FargateCluster
+    Export:
+      Name: !Sub "${ProjectId}-${Env}-ClusterName"
+
+  MigrateTaskDefinitionFamily:
+    Description: "ECS task definition family for one-off Alembic migrations"
+    Value: !Sub "${ProjectId}-${Env}-migrate"
+    Export:
+      Name: !Sub "${ProjectId}-${Env}-MigrateTaskFamily"
+
+  MigrateSecurityGroupId:
+    Description: "Security group for one-off migration ECS tasks"
+    Value: !Ref MigrateSecurityGroup
+    Export:
+      Name: !Sub "${ProjectId}-${Env}-MigrateSecurityGroupId"

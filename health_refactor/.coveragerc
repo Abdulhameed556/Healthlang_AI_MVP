@@ -1,0 +1,85 @@
+[run]
+source =
+    backend/src
+    admin/src
+    ai/src
+branch = True
+omit =
+    # ── Backend: infra / migrations ──
+    backend/src/infrastructure/database/migrations/*
+    backend/src/infrastructure/database/migrations/versions/*
+    backend/src/infrastructure/database/models/*
+    # ── Membership repo: scaffolding for not-yet-built multi-org feature
+    #    (depends on domain/model modules not yet created) ──
+    backend/src/infrastructure/repositories/organization_memberships.py
+    backend/src/infrastructure/repositories/_membership_mappers.py
+    backend/src/infrastructure/redis/*
+    backend/src/infrastructure/email/*
+    backend/src/infrastructure/storage/*
+    backend/src/infrastructure/ai_client/*
+    backend/src/presentation/api/v1/*/*
+    backend/src/presentation/middleware/*
+    backend/src/presentation/dependencies/*
+    # ── Backend: stub use cases (raise NotImplementedError, not yet in scope) ──
+    backend/src/application/agents/use_cases/*
+    backend/src/application/api_tools/use_cases/*
+    backend/src/application/evaluations/use_cases/*
+    backend/src/application/knowledge_base/use_cases/*
+    backend/src/application/numbers/use_cases/*
+    backend/src/application/tickets/use_cases/*
+    backend/src/application/widgets/use_cases/*
+    backend/src/application/organizations/use_cases/accept_invitation.py
+    backend/src/application/organizations/use_cases/invite_user.py
+    backend/src/application/organizations/use_cases/revoke_invitation.py
+    backend/src/application/organizations/use_cases/suspend_user.py
+    backend/src/application/organizations/use_cases/update_user_role.py
+    backend/src/application/auth/use_cases/logout.py
+    backend/src/application/auth/use_cases/refresh_token.py
+    backend/src/application/auth/use_cases/register_organization.py
+    backend/src/application/auth/use_cases/complete_password_reset.py
+    # ── Admin: stub / not-yet-in-scope modules ──
+    admin/src/application/auth/services.py
+    admin/src/application/auth/use_cases/change_password.py
+    admin/src/application/dashboard/*
+    admin/src/application/organizations/services.py
+    admin/src/application/organizations/use_cases/disable_organization.py
+    admin/src/application/organizations/use_cases/enable_organization.py
+    admin/src/application/organizations/use_cases/get_organization_detail.py
+    admin/src/application/organizations/use_cases/list_organizations.py
+    admin/src/application/organizations/use_cases/onboard_organization.py
+    admin/src/domain/organizations/*
+    admin/src/infrastructure/database/migrations/*
+    admin/src/infrastructure/database/migrations/versions/*
+    admin/src/presentation/api/v1/auth/endpoints/change_password.py
+    admin/src/presentation/api/v1/dashboard/*
+    admin/src/presentation/api/v1/organizations/endpoints/agents.py
+    admin/src/presentation/api/v1/organizations/endpoints/detail.py
+    admin/src/presentation/api/v1/organizations/endpoints/disable.py
+    admin/src/presentation/api/v1/organizations/endpoints/enable.py
+    admin/src/presentation/api/v1/organizations/endpoints/list.py
+    admin/src/presentation/api/v1/organizations/endpoints/onboard.py
+    admin/src/presentation/api/v1/organizations/endpoints/users.py
+    admin/src/presentation/middleware/*
+    admin/src/presentation/dependencies/*
+    # ── AI: unimplemented pipeline stubs (not yet in scope) ──
+    ai/src/application/chat/*
+    ai/src/application/voice/*
+    ai/src/application/evaluation/*
+    ai/src/application/summarisation/*
+    ai/src/application/retrieval/*
+    ai/src/application/tool_executor/*
+    ai/src/domain/*
+    ai/src/infrastructure/llm/factory.py
+    ai/src/infrastructure/llm/providers/*
+    ai/src/infrastructure/backend_client/*
+    ai/src/infrastructure/session_cache/*
+    ai/src/infrastructure/workers/broker.py
+    ai/src/infrastructure/vector_store/pgvector.py
+    ai/src/infrastructure/vector_store/session.py
+    ai/src/infrastructure/vector_store/models.py
+    ai/src/presentation/api/v1/*/*
+    ai/src/presentation/middleware/*
+
+[report]
+show_missing = True
+skip_empty = True

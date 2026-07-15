@@ -1,0 +1,23 @@
+[run]
+source = src
+branch = True
+omit =
+    src/application/*
+    src/domain/*
+    src/infrastructure/llm/*
+    src/infrastructure/storage/*
+    src/infrastructure/backend_client/*
+    src/infrastructure/document_processing/*
+    src/infrastructure/session_cache/*
+    src/infrastructure/workers/tasks/*
+    src/infrastructure/workers/broker.py
+    src/infrastructure/vector_store/migrations/*
+    src/infrastructure/vector_store/migrations/versions/*
+    src/infrastructure/vector_store/repositories/*
+    src/presentation/api/v1/*/*
+    src/presentation/middleware/*
+
+[report]
+fail_under = 90
+show_missing = True
+skip_empty = True

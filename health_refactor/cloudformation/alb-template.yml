@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Reusable Application Load Balancer Infrastructure
+
+Parameters:
+  ProjectId:
+    Description: The unique id or name of this project. Used in resource names and tags
+    Type: String
+    Default: rockpay
+  ACMCertificateArn:
+    Type: String
+    Description: The ARN for the ACM certificate for the domain name we are using for the ALB.
+
+Resources:
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${ProjectId}-alb
+      Scheme: internet-facing
+      Subnets:
+        - "{{resolve:ssm:/devops/public-subnet-1}}"
+        - "{{resolve:ssm:/devops/public-subnet-2}}"
+        - "{{resolve:ssm:/devops/public-subnet-3}}"
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectId}-alb
+        - Key: Project
+          Value: !Ref ProjectId
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${ProjectId}-alb-sg
+      GroupDescription: Security group for Application Load Balancer
+      VpcId: "{{resolve:ssm:/devops/vpc-id}}"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTPS from anywhere
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTP from anywhere
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectId}-alb-sg
+        - Key: Project
+          Value: !Ref ProjectId
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            Host: '#{host}'
+            Path: '/#{path}'
+            Query: '#{query}'
+            StatusCode: HTTP_301
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+
+  TLSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: 404
+            ContentType: text/plain
+            MessageBody: No service configured
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+      Certificates:
+        - CertificateArn: !Ref ACMCertificateArn
+
+Outputs:
+  ALBDomainName:
+    Description: The DNS name of the ALB
+    Value: !GetAtt ALB.DNSName
+    Export:
+      Name: !Sub '${ProjectId}-AlbDns'
+  
+  ALBArn:
+    Description: The ARN of the ALB
+    Value: !Ref ALB
+    Export:
+      Name: !Sub '${ProjectId}-AlbArn'
+  
+  ALBSecurityGroupId:
+    Description: The Security Group ID of the ALB
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: !Sub '${ProjectId}-AlbSecurityGroupId'
+  
+  HTTPListenerArn:
+    Description: The ARN of the HTTP Listener
+    Value: !Ref HTTPListener
+    Export:
+      Name: !Sub '${ProjectId}-HttpListenerArn'
+  
+  TLSListenerArn:
+    Description: The ARN of the HTTPS Listener
+    Value: !Ref TLSListener
+    Export:
+      Name: !Sub '${ProjectId}-TlsListenerArn'
+  
+  ALBFullName:
+    Description: The full name of the ALB for use in target group creation
+    Value: !GetAtt ALB.LoadBalancerFullName
+    Export:
+      Name: !Sub '${ProjectId}-AlbFullName'
+

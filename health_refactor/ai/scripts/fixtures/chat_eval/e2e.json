@@ -1,0 +1,41 @@
+{
+  "_comment": "Copy the value of _swagger_body and paste it into Swagger POST /api/v1/chat-evaluation/runs",
+  "_swagger_body": {
+    "eval_mode": "e2e",
+    "agent_id": "f99d70b3-295f-4b28-83ce-56c146a645fe",
+    "test_cases": [
+      {
+        "query": "My transfer has been pending for 48 hours, what should I do?",
+        "expected_answer": "Acknowledge the delay empathetically. Ask for the transaction ID. Explain common causes such as bank processing times, compliance checks, or public holidays. If pending more than 24 hours, advise the customer to contact support."
+      },
+      {
+        "query": "What is the USD to NGN exchange rate today?",
+        "expected_answer": "Exchange rates on Afriex are live and change frequently. The customer should check the current rate in the Afriex app before initiating a transfer. Do not state a specific rate."
+      },
+      {
+        "query": "How do I send money to Nigeria on Afriex?",
+        "expected_answer": "Open the Afriex app, select Nigeria as the destination, enter the amount, choose a payment method, add the recipient's bank account details, review the rate and fee, then confirm the transfer."
+      },
+      {
+        "query": "My recipient in Ghana says they did not receive the money but my app shows the transfer is completed.",
+        "expected_answer": "Ask the recipient to wait a few hours as bank posting can lag. Verify the account number entered was correct. If still not received after 4 hours, contact Afriex support with the transaction ID to trace the funds."
+      },
+      {
+        "query": "How long does a transfer to Ghana take?",
+        "expected_answer": "Bank account transfers to Ghana take 1 to 6 hours. MTN Mobile Money transfers are usually completed within 1 to 15 minutes. Vodafone Cash and AirtelTigo transfers take 5 to 30 minutes."
+      },
+      {
+        "query": "What documents do I need to verify my Afriex account?",
+        "expected_answer": "You need a government-issued photo ID: a passport, driver's license, or national ID card. Upload it in the Afriex app under Profile > Verify Identity along with a selfie."
+      },
+      {
+        "query": "What are the fees for sending $500 to Nigeria?",
+        "expected_answer": "Fees depend on the payment method. ACH bank transfer fees are $0 to $2. Debit card fees are $1 to $3. The exact fee is displayed in the app before you confirm."
+      },
+      {
+        "query": "Can I cancel my transfer and get a refund?",
+        "expected_answer": "You can cancel a transfer only if its status is still Pending and funds have not yet been sent. Go to Transaction History in the app and tap Cancel. If the cancel option is not available, the transfer has already been processed."
+      }
+    ]
+  }
+}

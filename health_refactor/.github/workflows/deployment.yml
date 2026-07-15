@@ -1,0 +1,220 @@
+name: "Deploy to prod"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        type: environment
+        required: true
+
+# Keep current run from being cancelled by a new run if it's still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GIT_TAG: "${{ github.sha }}"
+
+permissions:
+  id-token: write # This is required for aws oidc connection
+  contents: write # This is required for actions/checkout
+  pull-requests: write # This is required for gh bot to comment PR
+
+jobs:
+  normalize_environment:
+    name: Normalize environment
+    runs-on: ubuntu-latest
+    outputs:
+      normalized-env: ${{ env.environment }}
+    steps:
+      - name: Set environment for push events
+        if: github.event_name == 'push'
+        run: |
+          echo "environment=prod" >> $GITHUB_ENV
+
+      - name: Normalize environment variable
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          if [[ -n "$ENVIRONMENT" ]]; then
+            echo "environment=$ENVIRONMENT" >> $GITHUB_ENV
+          else
+            echo "Using environment from GITHUB_ENV"
+          fi
+
+  deploy:
+    needs: normalize_environment
+    name: Deploying to ${{needs.normalize_environment.outputs.normalized-env}}
+    runs-on: ubuntu-latest
+    environment: ${{ needs.normalize_environment.outputs.normalized-env }}
+    env:
+      environment: ${{ needs.normalize_environment.outputs.normalized-env }}
+      env: ${{ needs.normalize_environment.outputs.normalized-env }}
+      # Domain will be configured manually after the deployment on Cloudflare
+      domain_name: ${{ vars.DOMAIN_NAME }}
+      listener_rule_priority: ${{ vars.LISTENER_RULE_PRIORITY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials from AWS account
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT }}:role/${{vars.AWS_ROLE}}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: GitHub-OIDC
+
+      - name: Get Project Info
+        id: project
+        env:
+          ECR_REGISTRY: ${{ vars.AWS_ACCOUNT }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+        run: |
+          echo "project_id=supportos" >> $GITHUB_ENV
+          echo "repo_id=afriex" >> $GITHUB_ENV
+          echo "ecr_registry=$ECR_REGISTRY" >> $GITHUB_ENV
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registries: ${{ vars.AWS_ACCOUNT }}
+          mask-password: "true"
+
+      - name: Deploy "Create ECR Repo" CloudFormation stack
+        id: deploy-ecr
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ env.project_id }}-ecr-stack
+          template: cloudformation/ecr-template.yml
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >
+            ProjectId=${{ env.project_id }}
+          tags: |
+            [
+              { "Key": "Environment", "Value": "${{ env.env }}" },
+              { "Key": "ProjectId", "Value": "${{ env.project_id }}" }
+            ]
+
+      - name: Build, tag, and push Image to ECR
+        id: build_backend_image
+        run: |
+          IMG_TAG="${{env.ecr_registry}}/${{ env.project_id }}-backend:${{ env.GIT_TAG }}"
+
+          docker build -t $IMG_TAG .
+          docker push $IMG_TAG
+          
+          echo "backend_image=$IMG_TAG" >> $GITHUB_ENV 
+      
+      - name: Deploy ALB CloudFormation stack
+        id: deploy-alb
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ env.repo_id }}-alb-stack
+          template: cloudformation/alb-template.yml
+          capabilities: "CAPABILITY_AUTO_EXPAND, CAPABILITY_IAM"
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >
+            ProjectId=${{ env.repo_id }},
+            ACMCertificateArn="arn:aws:acm:${{ vars.AWS_REGION }}:${{ vars.AWS_ACCOUNT }}:certificate/${{ secrets.ACM_CERTIFICATE_ID }}"
+          tags: |
+            [
+              { "Key": "OrgId", "Value": "${{ env.repo_id }}" }
+            ]
+
+      - name: Check if services stack exists
+        id: stack_check
+        run: |
+          STACK_NAME="${{ env.project_id }}-${{ env.env }}-services-stack"
+          if aws cloudformation describe-stacks --stack-name "$STACK_NAME" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run database migrations (before service update)
+        if: steps.stack_check.outputs.exists == 'true'
+        id: pre_migrate
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          CLUSTER: ${{ env.project_id }}-${{ env.env }}
+          TASK_DEFINITION: ${{ env.project_id }}-${{ env.env }}-migrate
+          CONTAINER_NAME: ${{ env.project_id }}-${{ env.env }}-migrate
+          IMAGE: ${{ env.backend_image }}
+        run: |
+          echo "ran=false" >> "$GITHUB_OUTPUT"
+          STACK_NAME="${{ env.project_id }}-${{ env.env }}-services-stack"
+          SECURITY_GROUP_ID="$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --region "$AWS_REGION" \
+            --query "Stacks[0].Outputs[?OutputKey=='MigrateSecurityGroupId'].OutputValue | [0]" \
+            --output text)"
+          if [[ -z "$SECURITY_GROUP_ID" || "$SECURITY_GROUP_ID" == "None" ]]; then
+            echo "MigrateSecurityGroupId not in stack yet — will migrate after stack update."
+            exit 0
+          fi
+          export SECURITY_GROUP_ID
+          bash scripts/ecs_run_migrate.sh
+          echo "ran=true" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy main CloudFormation stack
+        id: deploy-services
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ env.project_id }}-${{ env.env }}-services-stack
+          template: cloudformation/services-template.yml
+          capabilities: "CAPABILITY_AUTO_EXPAND, CAPABILITY_IAM, CAPABILITY_NAMED_IAM"
+          no-fail-on-empty-changeset: "1"
+          no-execute-changeset: "0"
+          timeout-in-minutes: 20
+          parameter-overrides: >-
+            ProjectId=${{ env.project_id }},
+            BackendImage=${{ env.backend_image }},
+            Env=${{ env.env }},
+            OrgId=${{ env.repo_id }},
+            DomainName=${{ env.domain_name }},
+            ListenerRulePriority=${{ env.listener_rule_priority }},
+            ParameterStoreNamePrefix=supportos
+          tags: |
+            [
+              { "Key": "Env", "Value": "${{ env.env }}" },
+              { "Key": "ProjectId", "Value": "${{ env.project_id }}" },
+              { "Key": "BackendImage", "Value": "${{ env.backend_image }}" },
+              { "Key": "OrgId", "Value": "${{ env.repo_id }}" }
+            ]
+
+      - name: Run database migrations (after stack update)
+        id: post_migrate
+        if: steps.stack_check.outputs.exists != 'true' || steps.pre_migrate.outputs.ran != 'true'
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          CLUSTER: ${{ env.project_id }}-${{ env.env }}
+          TASK_DEFINITION: ${{ env.project_id }}-${{ env.env }}-migrate
+          CONTAINER_NAME: ${{ env.project_id }}-${{ env.env }}-migrate
+          IMAGE: ${{ env.backend_image }}
+        run: |
+          STACK_NAME="${{ env.project_id }}-${{ env.env }}-services-stack"
+          SECURITY_GROUP_ID="$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --region "$AWS_REGION" \
+            --query "Stacks[0].Outputs[?OutputKey=='MigrateSecurityGroupId'].OutputValue | [0]" \
+            --output text)"
+          export SECURITY_GROUP_ID
+          bash scripts/ecs_run_migrate.sh
+
+      - name: Restart ECS services after post-deploy migrate
+        if: steps.post_migrate.conclusion == 'success'
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          CLUSTER: ${{ env.project_id }}-${{ env.env }}
+        run: |
+          for SERVICE in backend dramatiq; do
+            aws ecs update-service \
+              --region "$AWS_REGION" \
+              --cluster "$CLUSTER" \
+              --service "${{ env.project_id }}-${{ env.env }}-${SERVICE}" \
+              --force-new-deployment
+          done
+
+      - name: Print ALB Domain Name for manual configuration
+        run: |
+          echo "Domain: https://${{ steps.deploy-alb.outputs.ALBDomainName }}"

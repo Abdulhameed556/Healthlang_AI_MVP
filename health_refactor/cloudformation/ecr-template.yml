@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to create multiple ECR repositories with lifecycle policies.
+
+Parameters:
+  ProjectId:
+    Type: String
+
+Resources:
+  ECRRepositoryBackend:
+    Type: 'AWS::ECR::Repository'
+    Properties:
+      RepositoryName: !Sub "${ProjectId}-backend"
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Expire images to keep only the last 100",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 100
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+
+
+Outputs:
+  ECRRepositoryBackend:
+    Description: "URI of the created ECR repository backend"
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectId}-backend
+

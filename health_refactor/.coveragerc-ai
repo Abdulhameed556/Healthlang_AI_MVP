@@ -1,0 +1,30 @@
+[run]
+branch = True
+source = ai/src
+omit =
+    # ── Unimplemented AI stubs (pipelines not yet in scope) ──
+    ai/src/application/chat/*
+    ai/src/application/voice/*
+    ai/src/application/evaluation/*
+    ai/src/application/summarisation/*
+    ai/src/application/retrieval/steps/rerank_results.py
+    ai/src/application/tool_executor/*
+    # ── Domain stubs ──
+    ai/src/domain/*
+    # ── Infrastructure stubs ──
+    ai/src/infrastructure/llm/factory.py
+    ai/src/infrastructure/llm/providers/*
+    ai/src/infrastructure/backend_client/*
+    ai/src/infrastructure/session_cache/*
+    ai/src/infrastructure/workers/broker.py
+    ai/src/infrastructure/vector_store/pgvector.py
+    ai/src/infrastructure/vector_store/session.py
+    ai/src/infrastructure/vector_store/models.py
+    # ── Presentation stubs ──
+    ai/src/presentation/api/v1/*/*
+    ai/src/presentation/middleware/*
+
+[report]
+show_missing = True
+skip_empty = True
+fail_under = 90

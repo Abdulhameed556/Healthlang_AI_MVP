@@ -1,0 +1,21 @@
+{
+  "_comment": "Copy the value of _swagger_body and paste it into Swagger POST /api/v1/chat-evaluation/runs. No expected_scenario_ids needed — the system auto-labels each query using an LLM judge.",
+  "_swagger_body": {
+    "eval_mode": "scenario",
+    "agent_id": "f99d70b3-295f-4b28-83ce-56c146a645fe",
+    "test_cases": [
+      { "query": "My Afriex transfer has been pending for over 48 hours and I need it resolved urgently." },
+      { "query": "What is the USD to NGN exchange rate right now and how is it calculated?" },
+      { "query": "How do I complete KYC verification on Afriex? What documents are accepted?" },
+      { "query": "I sent money to the wrong person. Can Afriex reverse the transaction?" },
+      { "query": "What are the transfer fees for sending $500 from the US to Nigeria?" },
+      { "query": "My recipient in Lagos says they have not received the money. The transfer shows completed on my end." },
+      { "query": "How long does it take for a transfer to be credited to a Nigerian bank account?" },
+      { "query": "I cannot log into my Afriex account. I think it has been locked or suspended." },
+      { "query": "How do I increase my Afriex transfer limit?" },
+      { "query": "How do I send money to Nigeria for the first time?" },
+      { "query": "Which African countries does Afriex support for transfers?" },
+      { "query": "I want to cancel my pending transfer and get a refund." }
+    ]
+  }
+}

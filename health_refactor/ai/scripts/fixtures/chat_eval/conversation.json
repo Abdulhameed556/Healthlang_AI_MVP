@@ -1,0 +1,22 @@
+{
+  "_comment": "Copy the value of _swagger_body_synthetic OR _swagger_body_real and paste it into Swagger POST /api/v1/chat-evaluation/runs",
+  "_how_to_use": [
+    "1. 'synthetic' mode: conversations are auto-generated from the agent's configured scenarios — no test_cases needed.",
+    "2. 'real' mode: conversations are loaded from actual chat_sessions in the DB — set sample_size to how many sessions to load.",
+    "3. Poll GET /api/v1/chat-evaluation/status/{run_id} until status is 'completed'.",
+    "4. aggregate_scores will include: conversation_quality, kb_utilization, rule_adherence, scenarios_covered."
+  ],
+  "_swagger_body_synthetic": {
+    "eval_mode": "conversation",
+    "agent_id": "f99d70b3-295f-4b28-83ce-56c146a645fe",
+    "conversation_source": "synthetic",
+    "determinism_runs": 1
+  },
+  "_swagger_body_real": {
+    "eval_mode": "conversation",
+    "agent_id": "f99d70b3-295f-4b28-83ce-56c146a645fe",
+    "conversation_source": "real",
+    "sample_size": 10,
+    "determinism_runs": 1
+  }
+}

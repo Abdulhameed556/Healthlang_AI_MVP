@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SupportOS — Agent Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=agents-filter-1" />
+  </head>
+  <body>
+    <div class="bg-mesh" aria-hidden="true"></div>
+    <div class="bg-grain" aria-hidden="true"></div>
+
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>SupportOS</h1>
+          <span class="brand-sub">Agent studio · demo</span>
+        </div>
+      </div>
+      <nav class="step-nav" id="step-nav" aria-label="Workflow steps">
+        <button type="button" class="step-pill" data-step="login" disabled>Sign in</button>
+        <span class="step-connector" aria-hidden="true"></span>
+        <button type="button" class="step-pill" data-step="agents" disabled>Agents</button>
+        <span class="step-connector" aria-hidden="true"></span>
+        <button type="button" class="step-pill" data-step="tickets" disabled>Tickets</button>
+        <span class="step-connector" aria-hidden="true"></span>
+        <button type="button" class="step-pill" data-step="chat" disabled>Test chat</button>
+        <span class="step-connector" aria-hidden="true"></span>
+        <button type="button" class="step-pill" data-step="eval" disabled>Retrieval eval</button>
+        <span class="step-connector" aria-hidden="true"></span>
+        <button type="button" class="step-pill" data-step="chat-eval" disabled>Chat eval</button>
+      </nav>
+      <div class="header-actions">
+        <div class="user-chip" id="header-meta">
+          <span class="user-dot"></span>
+          <span class="user-text">Not signed in</span>
+        </div>
+        <button type="button" class="icon-btn hidden" id="btn-logout" title="Sign out" aria-label="Sign out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Login -->
+      <section id="view-login" class="view active">
+        <div class="login-layout">
+          <div class="login-hero animate-in">
+            <p class="eyebrow">Workflow preview</p>
+            <h2>Configure agents.<br />Deploy. Test live.</h2>
+            <p class="lead">
+              A lightweight studio to validate your full support-agent pipeline before the production frontend ships.
+            </p>
+            <ul class="feature-list">
+              <li><span class="check">✓</span> Create & deploy agents</li>
+              <li><span class="check">✓</span> Configure API tools</li>
+              <li><span class="check">✓</span> Real guardrails & routing</li>
+              <li><span class="check">✓</span> Multi-turn test sessions</li>
+            </ul>
+          </div>
+          <div class="card card-glow login-card animate-in delay-1">
+            <h2>Welcome back</h2>
+            <p class="card-desc">Sign in with your dashboard credentials.</p>
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" placeholder="you@company.com" autocomplete="username" />
+            <label for="login-password">Password</label>
+            <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+            <button id="btn-login" type="button" class="btn-primary btn-block">
+              <span class="btn-label">Sign in</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+            <div id="login-error" class="alert alert-error hidden" role="alert"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Agents -->
+      <section id="view-agents" class="view">
+        <div class="view-head animate-in">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2>Your agents</h2>
+          </div>
+          <div class="view-head-actions">
+            <button type="button" class="btn-ghost" id="btn-go-tickets">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16v6a2 2 0 0 0 0 4v6H4v-6a2 2 0 0 0 0-4z"/><path d="M9 9h6M9 13h6"/>
+              </svg>
+              View tickets
+            </button>
+            <button type="button" class="btn-primary" id="btn-go-chat">
+              Open test chat
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <button type="button" class="btn-ghost" id="btn-go-eval">
+              Retrieval eval
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="tabs animate-in delay-1">
+          <button type="button" class="tab active" data-tab="list">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+            My agents
+          </button>
+          <button type="button" class="tab" data-tab="create" id="tab-btn-create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span id="tab-create-label">Create agent</span>
+          </button>
+          <button type="button" class="tab" data-tab="tools">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+            API tools
+          </button>
+          <button type="button" class="tab" data-tab="tool-create" id="tab-btn-tool-create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span id="tab-tool-create-label">Create tool</span>
+          </button>
+          <button type="button" class="tab" data-tab="tags">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><path d="M7 7h.01"/>
+            </svg>
+            Tags
+          </button>
+          <button type="button" class="tab" data-tab="tag-create" id="tab-btn-tag-create">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span id="tab-tag-create-label">Create tag</span>
+          </button>
+        </div>
+
+        <div id="tab-list" class="card animate-in delay-2">
+          <div class="ticket-filters agent-filters">
+            <div class="ticket-filter-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>
+              </svg>
+              <input id="agent-search" type="search" placeholder="Search agents by name…" />
+            </div>
+            <select id="agent-filter-type" class="select-styled">
+              <option value="">All types</option>
+              <option value="chat">Chat</option>
+              <option value="voice">Voice</option>
+            </select>
+            <select id="agent-filter-status" class="select-styled">
+              <option value="">All statuses</option>
+              <option value="inactive">Inactive</option>
+              <option value="deployed">Deployed</option>
+            </select>
+          </div>
+          <div class="card-toolbar">
+            <span class="agent-count" id="agent-count">0 agents</span>
+            <button type="button" class="btn-ghost" id="btn-refresh-agents">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+          <ul class="agent-list" id="agent-list"></ul>
+          <div id="agents-loading" class="skeleton-list hidden">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div id="agents-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="tab-tools-list" class="card animate-in delay-2 hidden">
+          <div class="card-toolbar">
+            <span class="agent-count" id="tool-count">0 tools</span>
+            <button type="button" class="btn-ghost" id="btn-refresh-tools">Refresh</button>
+          </div>
+          <ul class="agent-list" id="tool-list"></ul>
+          <div id="tools-loading" class="skeleton-list hidden">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div id="tools-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="tab-tool-view" class="agent-form-panel hidden animate-in">
+          <div class="form-panel-head">
+            <div>
+              <h2 id="tool-view-title">API tool</h2>
+              <p class="card-desc" id="tool-view-desc">Read-only view from the product API.</p>
+            </div>
+            <div class="form-panel-actions">
+              <button type="button" class="btn-primary" id="btn-view-tool-edit">Edit tool</button>
+              <button type="button" class="btn-ghost" id="btn-tool-view-close">Close</button>
+            </div>
+          </div>
+          <div id="tool-view-body" class="agent-view-body"></div>
+          <fieldset class="form-section tool-test-section">
+            <legend>Test saved tool</legend>
+            <div id="tool-view-test-params" class="form-grid"></div>
+            <div class="form-field">
+              <label for="at-view-test-auth">Auth override (optional)</label>
+              <input id="at-view-test-auth" type="password" placeholder="Bearer token for this test only" autocomplete="off" />
+            </div>
+            <button type="button" class="btn-ghost btn-sm" id="btn-test-tool-view">Run test</button>
+            <pre id="tool-view-test-result" class="tool-test-result hidden"></pre>
+          </fieldset>
+        </div>
+
+        <div id="tab-tool-form" class="agent-form-panel hidden animate-in">
+          <div class="form-panel-head">
+            <div>
+              <h2 id="tool-form-title">Create API tool</h2>
+              <p class="card-desc" id="tool-form-desc">
+                Matches <code>POST /api/v1/api-tools</code>
+              </p>
+            </div>
+            <button type="button" class="btn-ghost" id="btn-tool-form-cancel">Cancel</button>
+          </div>
+
+          <form id="tool-form" class="agent-form" novalidate onsubmit="return false">
+            <input type="hidden" id="tool-form-id" value="" />
+
+            <fieldset class="form-section">
+              <legend>Basics</legend>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="at-name">Name <span class="req">*</span></label>
+                  <input id="at-name" maxlength="255" placeholder="get_customer_context" />
+                  <span class="field-hint">snake_case — exposed to the LLM</span>
+                </div>
+                <div class="form-field">
+                  <label for="at-method">HTTP method</label>
+                  <input id="at-method" value="GET" disabled />
+                </div>
+                <div class="form-field full">
+                  <label for="at-description">Description <span class="req">*</span></label>
+                  <textarea id="at-description" rows="2" maxlength="5000"></textarea>
+                </div>
+                <div class="form-field full">
+                  <label for="at-endpoint">Endpoint URL <span class="req">*</span></label>
+                  <input id="at-endpoint" maxlength="2000" placeholder="https://api.example.com/users/{user_id}" />
+                </div>
+                <div class="form-field full">
+                  <label for="at-auth-key">Auth key (Bearer)</label>
+                  <input id="at-auth-key" type="password" autocomplete="off" placeholder="Optional bearer token" />
+                  <span class="field-hint" id="at-auth-hint">Optional bearer token (encrypted at rest).</span>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>Headers</legend>
+              <div id="tool-headers-list" class="repeatable-list"></div>
+              <button type="button" class="btn-ghost btn-sm" id="btn-add-header">+ Add header</button>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>Request parameters</legend>
+              <div id="tool-params-list" class="repeatable-list"></div>
+              <button type="button" class="btn-ghost btn-sm" id="btn-add-param">+ Add parameter</button>
+            </fieldset>
+
+            <fieldset class="form-section tool-test-section">
+              <legend>Test configuration</legend>
+              <p class="section-hint">Draft test uses <code>POST /api/v1/api-tools/test</code></p>
+              <div id="tool-test-params" class="form-grid"></div>
+              <div class="form-field">
+                <label for="at-test-auth">Auth override (optional)</label>
+                <input id="at-test-auth" type="password" autocomplete="off" placeholder="Override for test only" />
+              </div>
+              <div class="tool-test-actions">
+                <button type="button" class="btn-ghost btn-sm" id="btn-test-tool-draft">Test draft</button>
+                <button type="button" class="btn-ghost btn-sm" id="btn-test-tool-saved">Test saved tool</button>
+              </div>
+              <pre id="tool-test-result" class="tool-test-result hidden"></pre>
+            </fieldset>
+          </form>
+
+          <div class="form-sticky-bar">
+            <span class="form-sticky-hint" id="tool-form-hint">New API tool</span>
+            <button type="button" class="btn-primary" id="btn-save-tool">
+              <span class="btn-label">Save tool</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div id="tool-form-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="tab-tags-list" class="card animate-in delay-2 hidden">
+          <div class="card-toolbar">
+            <span class="agent-count" id="tag-count">0 tags</span>
+            <div class="card-toolbar-actions">
+              <input id="tag-search" type="search" class="select-styled" placeholder="Search tags…" />
+              <button type="button" class="btn-ghost" id="btn-refresh-tags">Refresh</button>
+            </div>
+          </div>
+          <ul class="agent-list" id="tag-list"></ul>
+          <div id="tags-loading" class="skeleton-list hidden">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div id="tags-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="tab-tag-form" class="agent-form-panel hidden animate-in">
+          <div class="form-panel-head">
+            <div>
+              <h2 id="tag-form-title">Create tag</h2>
+              <p class="card-desc" id="tag-form-desc">
+                Matches <code>POST /api/v1/tags</code>
+              </p>
+            </div>
+            <button type="button" class="btn-ghost" id="btn-tag-form-cancel">Cancel</button>
+          </div>
+
+          <form id="tag-form" class="agent-form" novalidate onsubmit="return false">
+            <input type="hidden" id="tag-form-id" value="" />
+
+            <fieldset class="form-section">
+              <legend>Tag</legend>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="tag-value">Value <span class="req">*</span></label>
+                  <input id="tag-value" maxlength="64" placeholder="refund_request" />
+                  <span class="field-hint">snake_case — the label the AI assigns to tickets</span>
+                </div>
+                <div class="form-field full">
+                  <label for="tag-description">Description</label>
+                  <textarea id="tag-description" rows="2" maxlength="500" placeholder="When does this tag apply? (optional)"></textarea>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+
+          <div class="form-sticky-bar">
+            <span class="form-sticky-hint" id="tag-form-hint">New classification tag</span>
+            <button type="button" class="btn-primary" id="btn-save-tag">
+              <span class="btn-label">Save tag</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div id="tag-form-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="tab-view" class="agent-form-panel hidden animate-in">
+          <div class="form-panel-head">
+            <div>
+              <h2 id="agent-view-title">Agent details</h2>
+              <p class="card-desc" id="agent-view-desc">Read-only view from the product API.</p>
+            </div>
+            <div class="form-panel-actions">
+              <button type="button" class="btn-primary" id="btn-view-edit">Edit agent</button>
+              <button type="button" class="btn-ghost" id="btn-view-close">Close</button>
+            </div>
+          </div>
+          <div id="agent-view-body" class="agent-view-body"></div>
+          <div id="agent-view-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="tab-create" class="agent-form-panel hidden animate-in">
+          <div class="form-panel-head">
+            <div>
+              <h2 id="agent-form-title">Create agent</h2>
+              <p class="card-desc" id="agent-form-desc">
+                Matches <code>POST /api/v1/agents</code> — all fields from the product API.
+              </p>
+            </div>
+            <button type="button" class="btn-ghost" id="btn-form-cancel">Cancel</button>
+          </div>
+
+          <form id="agent-form" class="agent-form" novalidate>
+            <input type="hidden" id="agent-form-id" value="" />
+
+            <!-- ── Basics ── -->
+            <fieldset class="form-section">
+              <legend>Basics</legend>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="af-name">Agent name <span class="req">*</span></label>
+                  <input id="af-name" required maxlength="255" placeholder="Support Bot" />
+                </div>
+                <div class="form-field">
+                  <label for="af-type">Agent type <span class="req">*</span></label>
+                  <select id="af-type">
+                    <option value="chat" selected>chat</option>
+                    <option value="voice">voice</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- ── Brand config ── -->
+            <fieldset class="form-section">
+              <legend>Brand identity</legend>
+              <p class="section-hint">Maps to <code>brand_config</code></p>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="af-identity-name">Identity name</label>
+                  <input
+                    id="af-identity-name"
+                    maxlength="255"
+                    placeholder="Alex"
+                  />
+                  <span class="field-hint">What the agent calls itself · <code>brand_config.identity_name</code></span>
+                </div>
+                <div class="form-field">
+                  <label for="af-timezone">Timezone</label>
+                  <select id="af-timezone"></select>
+                  <span class="field-hint">Current date/time in orchestrator and scenario-routing prompts · <code>brand_config.timezone</code></span>
+                </div>
+                <div class="form-field full">
+                  <label for="af-company-name">Company name</label>
+                  <input id="af-company-name" maxlength="255" placeholder="Acme Global Solutions" />
+                </div>
+                <div class="form-field full">
+                  <label for="af-brand-prompt">Brand voice prompt</label>
+                  <textarea
+                    id="af-brand-prompt"
+                    rows="4"
+                    maxlength="2000"
+                    placeholder="Describe how this agent should represent your brand and speak to customers."
+                  ></textarea>
+                  <button type="button" class="btn-ghost btn-sm btn-expand">⤢ Expand editor</button>
+                  <span class="field-hint">Maps to <code>brand_config.prompt</code> · max 2,000 characters</span>
+                </div>
+                <div class="form-field full">
+                  <span class="label-block">Languages <span class="req">*</span></span>
+                  <div class="checkbox-group" id="af-languages">
+                    <label class="checkbox-pill"><input type="checkbox" value="english" checked /> English</label>
+                    <label class="checkbox-pill"><input type="checkbox" value="spanish" /> Spanish</label>
+                    <label class="checkbox-pill"><input type="checkbox" value="french" /> French</label>
+                    <label class="checkbox-pill"><input type="checkbox" value="german" /> German</label>
+                    <label class="checkbox-pill"><input type="checkbox" value="portuguese" /> Portuguese</label>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- ── Personalization ── -->
+            <fieldset class="form-section">
+              <legend>Personalization</legend>
+              <p class="section-hint">Maps to <code>personalization_config</code></p>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="af-tone">Tone profile</label>
+                  <select id="af-tone">
+                    <option value="empathetic_professional">Empathetic professional</option>
+                    <option value="friendly_casual">Friendly casual</option>
+                    <option value="formal_business">Formal business</option>
+                    <option value="concise_direct">Concise direct</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="af-formality">Formality</label>
+                  <select id="af-formality">
+                    <option value="casual">Casual</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="formal">Formal</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="af-pacing">Pacing (0.5 – 2.0)</label>
+                  <input id="af-pacing" type="number" min="0.5" max="2" step="0.1" value="1.0" />
+                </div>
+                <div class="form-field" id="voice-identity-field">
+                  <label for="af-voice-identity">Voice identity</label>
+                  <input id="af-voice-identity" maxlength="255" placeholder="allison_us_female_neural" />
+                  <span class="field-hint">Required for voice agents</span>
+                </div>
+                <div class="form-field full">
+                  <label for="af-greeting">Custom greeting</label>
+                  <textarea id="af-greeting" rows="2" maxlength="5000"
+                    >Hello! Thank you for contacting support. How can I help you today?</textarea>
+                </div>
+                <div class="form-field full">
+                  <label for="af-signoff">Custom sign-off</label>
+                  <textarea id="af-signoff" rows="2" maxlength="5000"
+                    >Is there anything else I can assist you with before we finish?</textarea>
+                </div>
+                <div class="form-field full">
+                  <label class="checkbox-pill inline-check">
+                    <input type="checkbox" id="af-sentiment" checked />
+                    Enable sentiment analysis
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- ── Rules ── -->
+            <fieldset class="form-section">
+              <legend>Rules</legend>
+              <p class="section-hint">Behavioral guardrails — <code>rules[]</code></p>
+              <div id="rules-list" class="repeatable-list"></div>
+              <button type="button" class="btn-ghost btn-sm" id="btn-add-rule">+ Add rule</button>
+            </fieldset>
+
+            <!-- ── Scenarios ── -->
+            <fieldset class="form-section">
+              <legend>Scenarios</legend>
+              <p class="section-hint">Routing intents — <code>scenarios[]</code></p>
+              <div id="scenarios-list" class="repeatable-list"></div>
+              <button type="button" class="btn-ghost btn-sm" id="btn-add-scenario">+ Add scenario</button>
+            </fieldset>
+
+            <!-- ── Attachments ── -->
+            <fieldset class="form-section">
+              <legend>Attachments</legend>
+              <div class="form-grid">
+                <div class="form-field full">
+                  <label>Knowledge bases</label>
+                  <div id="af-kb-checkboxes" class="checkbox-group vertical">
+                    <span class="field-hint">No knowledge bases loaded — enter UUIDs below if needed</span>
+                  </div>
+                  <input id="af-kb-ids" placeholder="Or comma-separated knowledge_base_ids (UUIDs)" />
+                </div>
+                <div class="form-field full">
+                  <label>API tools</label>
+                  <div id="af-tools-checkboxes" class="checkbox-group vertical">
+                    <span class="field-hint loading-hint">Loading tools…</span>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+
+          <div class="form-sticky-bar">
+            <span class="form-sticky-hint" id="form-sticky-hint">Unsaved changes</span>
+            <button type="button" class="btn-primary" id="btn-save-agent">
+              <span class="btn-label">Save agent</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div id="form-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+      </section>
+
+      <!-- Tickets -->
+      <section id="view-tickets" class="view">
+        <div class="view-head animate-in">
+          <div>
+            <p class="eyebrow">Support</p>
+            <h2>Tickets</h2>
+          </div>
+          <button type="button" class="btn-ghost" id="btn-tickets-back-agents">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to agents
+          </button>
+        </div>
+
+        <div class="card animate-in delay-1 ticket-filters-card">
+          <div class="ticket-filters">
+            <div class="ticket-filter-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>
+              </svg>
+              <input id="ticket-search" type="search" placeholder="Search reference, customer, status, agent…" />
+            </div>
+            <select id="ticket-filter-status" class="select-styled">
+              <option value="">All statuses</option>
+              <option value="open">Open</option>
+              <option value="resolved">Resolved</option>
+              <option value="transferred">Transferred</option>
+              <option value="failed">Failed</option>
+              <option value="unknown">Unknown</option>
+            </select>
+            <select id="ticket-filter-interface" class="select-styled">
+              <option value="">All channels</option>
+              <option value="chat">Chat</option>
+              <option value="voice">Voice</option>
+            </select>
+            <select id="ticket-filter-date" class="select-styled">
+              <option value="">Any time</option>
+              <option value="last_24_hours">Last 24 hours</option>
+              <option value="last_7_days">Last 7 days</option>
+              <option value="last_30_days">Last 30 days</option>
+              <option value="last_90_days">Last 90 days</option>
+            </select>
+            <input
+              id="ticket-filter-tag"
+              type="search"
+              class="select-styled"
+              placeholder="Filter by tags (comma-separated)…"
+              title="Only org tags — matches tickets with any of these tags"
+            />
+            <button type="button" class="btn-ghost" id="btn-refresh-tickets">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div id="ticket-list-card" class="card animate-in delay-2">
+          <div class="card-toolbar">
+            <span class="agent-count" id="ticket-count">0 tickets</span>
+          </div>
+          <ul class="agent-list" id="ticket-list"></ul>
+          <div id="tickets-loading" class="skeleton-list hidden">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+          </div>
+          <div id="tickets-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+
+        <div id="ticket-detail-panel" class="agent-form-panel hidden animate-in">
+          <div class="form-panel-head">
+            <div>
+              <h2 id="ticket-detail-title">Ticket</h2>
+              <p class="card-desc" id="ticket-detail-desc">Read-only view from the product API.</p>
+            </div>
+            <button type="button" class="btn-ghost" id="btn-ticket-detail-close">Close</button>
+          </div>
+          <div id="ticket-detail-body" class="agent-view-body"></div>
+          <div id="ticket-detail-error" class="alert alert-error hidden" role="alert"></div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section id="view-chat" class="view">
+        <div class="view-head animate-in">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2>Live test chat</h2>
+          </div>
+          <button type="button" class="btn-ghost" id="btn-back-agents">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to agents
+          </button>
+        </div>
+
+        <div class="chat-layout animate-in delay-1">
+          <aside class="chat-sidebar card">
+            <label for="chat-agent-select">Select agent</label>
+            <select id="chat-agent-select" class="select-styled"></select>
+            <div class="sidebar-actions">
+              <button type="button" id="btn-new-session" class="btn-primary btn-block">
+                <span class="btn-label">Start new session</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="btn-ghost btn-block" id="btn-deploy-agent">Publish &amp; deploy</button>
+            </div>
+            <div class="session-info" id="chat-status">
+              <span class="session-label">Session</span>
+              <span class="session-value">No active session</span>
+              <span class="session-timing hidden" id="chat-last-response"></span>
+            </div>
+            <div class="conversation-state-wrap hidden" id="conversation-state-wrap">
+              <span class="session-label">Conversation state</span>
+              <span class="state-pill" id="conversation-state-pill">—</span>
+            </div>
+          </aside>
+
+          <div class="chat-panel card card-glow">
+            <div class="chat-log" id="chat-log">
+              <div class="chat-empty" id="chat-empty">
+                <div class="chat-empty-icon">💬</div>
+                <p>Start a session to talk to your agent</p>
+              </div>
+            </div>
+            <div id="typing-indicator" class="typing-indicator hidden" aria-live="polite">
+              <span></span><span></span><span></span>
+              <em>Agent is thinking…</em>
+            </div>
+            <div
+              id="transfer-support-prompt"
+              class="session-action-prompt transfer-support-prompt hidden"
+              role="dialog"
+              aria-labelledby="transfer-support-title"
+            >
+              <div class="session-action-inner">
+                <p id="transfer-support-title" class="session-action-title">
+                  Transfer to live support?
+                </p>
+                <p class="session-action-text">
+                  The agent recommends a human specialist. Confirm to hand off to live support —
+                  queue and ticketing will connect here later.
+                </p>
+                <div class="session-action-actions">
+                  <button type="button" id="btn-transfer-confirm" class="btn-primary">
+                    Yes, transfer me
+                  </button>
+                  <button type="button" id="btn-transfer-continue" class="btn-ghost">
+                    No, keep chatting with AI
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div
+              id="end-conversation-prompt"
+              class="session-action-prompt end-conversation-prompt hidden"
+              role="dialog"
+              aria-labelledby="end-conversation-title"
+            >
+              <div class="session-action-inner">
+                <p id="end-conversation-title" class="session-action-title">
+                  Close this conversation?
+                </p>
+                <p class="session-action-text">
+                  It looks like we're done here. Confirm to end the session — summary and
+                  ticketing will hook up here later.
+                </p>
+                <div class="session-action-actions">
+                  <button type="button" id="btn-end-confirm" class="btn-primary">
+                    Yes, end conversation
+                  </button>
+                  <button type="button" id="btn-end-continue" class="btn-ghost">
+                    No, keep chatting
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="session-closed-banner" class="session-closed-banner hidden" role="status">
+              This conversation is closed. Start a new session to test again.
+            </div>
+            <div class="chat-compose chat-compose-idle" id="chat-compose">
+              <textarea
+                id="chat-input"
+                placeholder="Start a session to send messages…"
+                rows="2"
+                disabled
+              ></textarea>
+              <button
+                type="button"
+                id="btn-compose-start"
+                class="btn-primary btn-compose-start"
+              >
+                <span class="btn-label">Start new session</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+              </button>
+              <button
+                type="button"
+                id="btn-send"
+                class="btn-send hidden"
+                disabled
+                aria-label="Send message"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                </svg>
+              </button>
+            </div>
+            <div id="chat-error" class="alert alert-error hidden" role="alert"></div>
+          </div>
+        </div>
+      </section>
+      <!-- Retrieval Evaluation -->
+      <section id="view-eval" class="view">
+        <div class="view-head animate-in">
+          <div>
+            <p class="eyebrow">Step 4</p>
+            <h2>Retrieval evaluation</h2>
+          </div>
+          <button type="button" class="btn-ghost" id="btn-back-from-eval">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to agents
+          </button>
+        </div>
+
+        <div class="eval-layout animate-in delay-1">
+          <!-- Config card -->
+          <div class="card">
+            <h3 class="card-section-title">Run configuration</h3>
+            <p class="card-desc">
+              Scores your retrieval pipeline on a KB entry using DeepEval — runs in the background,
+              polls every 2.5 s until complete.
+            </p>
+
+            <div class="form-grid" style="margin-top:1.25rem">
+              <div class="form-field full">
+                <label for="eval-agent-select">Agent ID <span class="req">*</span></label>
+                <input id="eval-agent-select" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                <span class="field-hint">UUID of the agent to evaluate against</span>
+              </div>
+              <div class="form-field full">
+                <label for="eval-kb-entry-ids">KB Entry IDs <span class="req">*</span></label>
+                <textarea id="eval-kb-entry-ids" rows="3" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&#10;xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></textarea>
+                <span class="field-hint">One UUID per line or comma-separated — up to 10 entries</span>
+              </div>
+              <div class="form-field">
+                <label for="eval-top-k">Top K</label>
+                <input id="eval-top-k" type="number" min="1" max="20" value="5" />
+                <span class="field-hint">Chunks retrieved per query (1–20)</span>
+              </div>
+              <div class="form-field">
+                <label for="eval-max-contexts">Max contexts</label>
+                <input id="eval-max-contexts" type="number" min="1" max="20" value="4" />
+                <span class="field-hint">Context windows evaluated (1–20)</span>
+              </div>
+              <div class="form-field">
+                <label for="eval-max-goldens">Max goldens</label>
+                <input id="eval-max-goldens" type="number" min="1" max="10" value="2" />
+                <span class="field-hint">Questions generated per context (1–10)</span>
+              </div>
+            </div>
+
+            <div class="eval-run-bar">
+              <button type="button" class="btn-primary" id="btn-run-eval">
+                <span class="btn-label">Run evaluation</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div id="eval-error" class="alert alert-error hidden" role="alert"></div>
+          </div>
+
+          <!-- Results card -->
+          <div class="card hidden" id="eval-results-panel">
+            <div class="eval-results-header">
+              <h3 class="card-section-title">Results</h3>
+              <div class="eval-meta">
+                <span id="eval-status-badge" class="eval-status-badge eval-status-pending">PENDING</span>
+                <span class="eval-run-label">Run ID: <code id="eval-run-id">—</code></span>
+              </div>
+            </div>
+
+            <div class="eval-section">
+              <h4 class="eval-sub-title">Aggregate scores</h4>
+              <div id="eval-aggregate-scores"></div>
+            </div>
+
+            <div class="eval-section">
+              <h4 class="eval-sub-title">Per-entry results</h4>
+              <div id="eval-entry-reports"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+      <section id="view-chat-eval" class="view">
+        <div class="view-head animate-in">
+          <div>
+            <p class="eyebrow">Step 5</p>
+            <h2>Chat evaluation</h2>
+          </div>
+          <button type="button" class="btn-ghost" id="btn-back-from-chat-eval">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to agents
+          </button>
+        </div>
+
+        <div class="eval-layout animate-in delay-1">
+          <!-- Config card -->
+          <div class="card">
+            <h3 class="card-section-title">Run configuration</h3>
+            <p class="card-desc">
+              Evaluates chat pipeline stages (input guardrail, scenario agent, output guardrail, or
+              end-to-end) using inline test cases. Runs in the background and polls every 2.5 s.
+            </p>
+
+            <div class="form-grid" style="margin-top:1.25rem">
+              <div class="form-field full">
+                <label for="chat-eval-mode">Eval mode <span class="req">*</span></label>
+                <select id="chat-eval-mode">
+                  <option value="input_guardrail">Input guardrail</option>
+                  <option value="scenario">Scenario agent</option>
+                  <option value="output_guardrail">Output guardrail</option>
+                  <option value="e2e">End-to-end (all stages)</option>
+                  <option value="conversation">Conversation</option>
+                </select>
+                <span class="field-hint">Which pipeline stage(s) to evaluate</span>
+              </div>
+              <div class="form-field full hidden" id="chat-eval-agent-row">
+                <label for="chat-eval-agent-id">Agent ID <span class="req">*</span></label>
+                <input id="chat-eval-agent-id" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                <span class="field-hint">Required for scenario, e2e and conversation modes</span>
+              </div>
+              <div class="form-field full hidden" id="chat-eval-conv-row">
+                <label for="chat-eval-conv-source">Conversation source <span class="req">*</span></label>
+                <select id="chat-eval-conv-source">
+                  <option value="synthetic">Synthetic (generate from agent scenarios)</option>
+                  <option value="real">Real (load from chat sessions)</option>
+                </select>
+              </div>
+              <div class="form-field half hidden" id="chat-eval-sample-row">
+                <label for="chat-eval-sample-size">Sample size</label>
+                <input id="chat-eval-sample-size" type="number" value="10" min="1" max="100" />
+                <span class="field-hint">Number of real sessions to sample</span>
+              </div>
+              <div class="form-field half hidden" id="chat-eval-determinism-row">
+                <label for="chat-eval-determinism-runs">Determinism runs</label>
+                <input id="chat-eval-determinism-runs" type="number" value="1" min="1" max="5" />
+                <span class="field-hint">Times each conversation is replayed (1–5)</span>
+              </div>
+              <div class="form-field half hidden" id="chat-eval-rounds-row">
+                <label for="chat-eval-conv-rounds">Conversation rounds</label>
+                <input id="chat-eval-conv-rounds" type="number" value="5" min="2" max="10" />
+                <span class="field-hint">Turns per conversation (2–10)</span>
+              </div>
+              <div class="form-field full" id="chat-eval-cases-row">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.5rem;flex-wrap:wrap">
+                  <label for="chat-eval-cases">Test cases (JSON array) <span class="req">*</span></label>
+                  <div style="display:flex;gap:0.5rem;flex-shrink:0">
+                    <button type="button" class="btn-ghost btn-sm" id="btn-load-eval-file">&#8593; Load file</button>
+                    <button type="button" class="btn-ghost btn-sm" id="btn-reset-eval-cases">&#8635; Reset example</button>
+                  </div>
+                </div>
+                <input type="file" id="chat-eval-file-input" accept=".json" style="display:none" />
+                <textarea id="chat-eval-cases" rows="10" placeholder="[]" style="font-family:var(--font-mono);font-size:0.78rem"></textarea>
+                <span class="field-hint">Edit freely &mdash; or load a fixture file from <code>ai/scripts/fixtures/chat_eval/</code></span>
+              </div>
+            </div>
+
+            <div class="eval-run-bar">
+              <button type="button" class="btn-primary" id="btn-run-chat-eval">
+                <span class="btn-label">Run evaluation</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div id="chat-eval-error" class="alert alert-error hidden" role="alert"></div>
+          </div>
+
+          <!-- Results card -->
+          <div class="card hidden" id="chat-eval-results-panel">
+            <div class="eval-results-header">
+              <h3 class="card-section-title">Results</h3>
+              <div class="eval-meta">
+                <span id="chat-eval-status-badge" class="eval-status-badge eval-status-pending">pending</span>
+                <span class="eval-run-label">Run ID: <code id="chat-eval-run-id">—</code></span>
+              </div>
+            </div>
+
+            <div class="eval-section">
+              <h4 class="eval-sub-title">Aggregate scores</h4>
+              <div id="chat-eval-aggregate-scores"></div>
+            </div>
+
+            <div class="eval-section">
+              <h4 class="eval-sub-title">Per-case results</h4>
+              <div id="chat-eval-case-results"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+    <div id="field-modal" class="field-modal hidden" role="dialog" aria-modal="true" aria-labelledby="field-modal-title">
+      <div class="field-modal-backdrop" data-field-modal-close></div>
+      <div class="field-modal-dialog">
+        <div class="field-modal-head">
+          <h3 id="field-modal-title">Edit</h3>
+          <button type="button" class="btn-icon-remove" id="field-modal-close" aria-label="Close">×</button>
+        </div>
+        <textarea id="field-modal-textarea" class="field-modal-textarea" placeholder="Type here…"></textarea>
+        <div class="field-modal-foot">
+          <span id="field-modal-count" class="field-hint"></span>
+          <div class="field-modal-actions">
+            <button type="button" class="btn-ghost" id="field-modal-cancel">Cancel</button>
+            <button type="button" class="btn-primary" id="field-modal-save">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="versions-modal" class="field-modal hidden" role="dialog" aria-modal="true" aria-labelledby="versions-modal-title">
+      <div class="field-modal-backdrop" data-versions-modal-close></div>
+      <div class="field-modal-dialog">
+        <div class="field-modal-head">
+          <h3 id="versions-modal-title">Version history</h3>
+          <button type="button" class="btn-icon-remove" id="versions-modal-close" aria-label="Close">×</button>
+        </div>
+        <div id="versions-modal-body" class="versions-modal-body"></div>
+        <div class="field-modal-foot">
+          <span class="field-hint">Publish freezes the draft; Deploy makes a version live.</span>
+          <div class="field-modal-actions">
+            <button type="button" class="btn-primary" id="versions-modal-publish">Publish current draft</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+    <script src="config.js?v=chat-eval-1"></script>
+    <script src="agent-catalog.js?v=chat-eval-1"></script>
+    <script src="agent-form.js?v=chat-eval-1"></script>
+    <script src="agent-view.js?v=chat-eval-1"></script>
+    <script src="api-tools-ui.js?v=chat-eval-1"></script>
+    <script src="eval-ui.js?v=chat-eval-1"></script>
+    <script src="chat-eval-ui.js?v=chat-eval-1"></script>
+    <script src="tickets-ui.js?v=chat-eval-1"></script>
+    <script src="tags-ui.js?v=chat-eval-1"></script>
+    <script src="app.js?v=chat-eval-1"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+You have been invited to join {{ department_name }} on {{ app_name }}.
+
+Accept your invitation:
+{{ invitation_link }}
+
+This link expires in {{ expire_hours }} hours.

@@ -1,0 +1,243 @@
+Afriex FAQ — Customer Support Knowledge Base
+
+=== ABOUT AFRIEX ===
+
+What is Afriex?
+Afriex is a licensed cross-border money transfer service built for Africa and the African diaspora. It lets customers in the US, UK, and Canada send money directly to bank accounts and mobile wallets across Africa. Afriex focuses on speed, transparency, and low fees — showing you the exact rate and fee before you confirm.
+
+Which countries can I send money to?
+Afriex currently supports transfers to the following African countries:
+- Nigeria (bank accounts, mobile wallets: OPay, PalmPay, Kuda)
+- Ghana (bank accounts, mobile money: MTN MoMo, Vodafone Cash, AirtelTigo Money)
+- Kenya (M-Pesa, bank accounts)
+- Uganda (MTN Mobile Money, Airtel Money, bank accounts)
+- Tanzania (M-Pesa, Tigo Pesa, Airtel Money, bank accounts)
+- Cameroon (Orange Money, MTN Mobile Money)
+- Senegal (Wave, Orange Money, Free Money)
+
+More corridors are being added. Check the Afriex app for the latest supported countries.
+
+Which countries can I send money from?
+You can send from:
+- United States (USD)
+- United Kingdom (GBP)
+- Canada (CAD)
+
+=== SENDING MONEY ===
+
+How do I send money with Afriex?
+1. Download the Afriex app on iOS or Android.
+2. Create an account and complete identity verification (KYC) — takes a few minutes.
+3. Add a payment method: bank account (ACH/direct debit) or debit card.
+4. Tap "Send Money," select the destination country and enter the amount.
+5. Enter your recipient's bank account number or mobile wallet number.
+6. Review the exchange rate, fee, and amount the recipient will receive.
+7. Confirm the transfer. You will receive a transaction ID you can use to track the transfer.
+
+What payment methods does Afriex accept?
+- US: ACH bank transfer, debit card
+- UK: Faster Payments (bank transfer), debit card
+- Canada: Interac e-Transfer, debit card
+Credit cards are not supported. Payment availability varies by send country.
+
+Is there a minimum or maximum transfer amount?
+- Minimum: $10 USD (or equivalent in GBP/CAD)
+- Unverified account limit: $2,500 USD per transfer, $5,000 USD per month
+- Fully verified (KYC complete) limit: $10,000 USD per transfer, $50,000 USD per month
+Limits reset on the first of each calendar month.
+
+Can I send to multiple recipients at once?
+Not currently. Each transfer is sent to one recipient. You can initiate multiple transfers in sequence.
+
+=== EXCHANGE RATES AND FEES ===
+
+How does Afriex calculate exchange rates?
+Afriex uses a rate close to the mid-market (interbank) rate with a small transparent margin. The exact rate is shown before you confirm. Rates change throughout the day based on market conditions. The rate is locked in when you confirm — not when you initiate.
+
+What are Afriex's transfer fees?
+Fees depend on destination country and payment method:
+- Nigeria: $0–$2 (bank ACH), $1–$3 (debit card)
+- Ghana: $1–$3
+- Kenya: $0–$2
+- Uganda: $1–$3
+- Other corridors: $1–$4
+The exact fee is always displayed before confirmation. There are no hidden charges or recipient fees.
+
+Does the recipient pay any fees?
+No. The recipient receives exactly the converted amount shown at confirmation. Afriex does not charge the recipient.
+
+Are there any hidden charges?
+No. Afriex shows the full cost (exchange rate + fee + recipient amount) before you confirm. What you see is what you pay.
+
+=== TRANSFER TIMES ===
+
+How long does a transfer to Nigeria take?
+- Bank accounts (GTBank, Access, Zenith, First Bank, UBA, etc.): 5 minutes to 2 hours
+- Mobile wallets (OPay, PalmPay, Kuda): Usually instant to 15 minutes
+- Delays can occur during bank downtime, public holidays, or compliance review
+- If pending more than 6 hours, contact support with your transaction ID
+
+How long does a transfer to Ghana take?
+- Bank accounts (GCB, Ecobank, Fidelity, Stanbic, Absa): 1 to 6 hours, up to 24 hours during peak periods
+- MTN Mobile Money: Usually 1 to 15 minutes
+- Vodafone Cash: Usually 5 to 30 minutes
+- AirtelTigo Money: Usually 5 to 30 minutes
+- If pending more than 24 hours, contact support
+
+How long does a transfer to Kenya take?
+- M-Pesa: Usually instant to 5 minutes
+- Bank accounts (Equity, KCB, Co-operative, Absa): 1 to 2 business days
+- Delays may occur on weekends and Kenyan public holidays
+
+How long does a transfer to Uganda take?
+- MTN Mobile Money: Usually instant to 10 minutes
+- Airtel Money: Usually instant to 10 minutes
+- Bank accounts (Stanbic, DFCU, Centenary): 1 to 2 business days
+
+How long does a transfer to Tanzania take?
+- M-Pesa: Usually instant to 10 minutes
+- Tigo Pesa / Airtel Money: Usually 5 to 30 minutes
+- Bank transfers: 1 to 2 business days
+
+How long does a transfer to Cameroon take?
+- Orange Money: 15 minutes to 2 hours
+- MTN Mobile Money: 15 minutes to 2 hours
+- Bank transfers: 2 to 3 business days
+
+How long does a transfer to Senegal take?
+- Wave: Usually instant to 15 minutes
+- Orange Money: 15 minutes to 2 hours
+- Bank transfers: 2 to 3 business days
+
+What is the general rule for transfer times?
+- Mobile money / wallet transfers: Instant to 30 minutes
+- Bank transfers within Africa: A few hours to 2 business days
+- Factors that slow transfers: bank processing backlogs, compliance review, public holidays in the destination country, incorrect account details, high transfer volume periods (month-end, festive seasons)
+
+Why is my transfer taking longer than expected?
+Common reasons for delays:
+- Recipient bank processing backlog (common at month-end)
+- Compliance or fraud review triggered by large or unusual transfers
+- Incorrect recipient account number or phone number
+- Public holiday in the destination country
+- Temporary bank or mobile network downtime
+- Weekend processing delays for bank transfers
+If your transfer has been pending for more than 24 hours (or 6 hours for Nigeria), contact Afriex support with your transaction ID.
+
+=== TRANSFER STATUS ===
+
+How do I track my transfer?
+Open the Afriex app and go to "Transaction History." Select the transfer to see its current status and timeline. You also receive email and push notifications at each stage.
+
+What do the transfer statuses mean?
+- Pending: Your payment is being processed and funds have not yet left your account
+- Processing: Funds have been debited and the transfer is being sent
+- In Transit: Transfer has been sent to the recipient's bank or mobile wallet provider
+- Completed: Recipient has received the funds successfully
+- Failed: Transfer could not be completed — your funds will be refunded automatically
+- Cancelled: You cancelled the transfer before it was processed
+
+My transfer has been "Pending" for more than 24 hours. What do I do?
+Contact Afriex support via the in-app chat or at support@afriex.co. Include your transaction ID (found in Transaction History). Our team will investigate and provide an update within 2 hours.
+
+My transfer shows "Completed" but the recipient hasn't received the money.
+This can happen when the recipient's bank or wallet provider has a processing delay on their end. Steps to resolve:
+1. Ask the recipient to wait 2–4 hours as bank posting can lag.
+2. Confirm the account number or phone number you entered is correct.
+3. Ask the recipient to check all linked accounts and wallet balances.
+4. If still not received after 4 hours, contact Afriex support with your transaction ID — we will trace the funds with the receiving institution.
+
+=== ACCOUNT AND VERIFICATION (KYC) ===
+
+Why do I need to verify my identity?
+Afriex is a regulated financial service. Identity verification (KYC) is required by law to prevent fraud and money laundering. It also unlocks higher transfer limits.
+
+How do I complete KYC verification?
+1. Open the Afriex app and go to your Profile.
+2. Tap "Verify Identity."
+3. Upload a government-issued photo ID: passport, driver's license, or national ID card.
+4. Take a selfie using your phone camera for facial verification.
+5. Wait for approval — usually instant but can take up to 24 hours.
+
+What ID documents are accepted?
+- Passport (any nationality)
+- Driver's license (US, UK, Canada)
+- National ID card
+
+My KYC verification was rejected. What should I do?
+Common rejection reasons:
+- ID photo is blurry or cut off — retake with full document visible and in good lighting
+- Name on ID does not match name on Afriex account
+- Expired ID document
+- Selfie does not match the ID photo
+Tap "Retry Verification" in the app and resubmit. If rejected again, contact support@afriex.co.
+
+Why is my account suspended or restricted?
+Account restrictions may be applied for:
+- Incomplete identity verification
+- Unusual transaction patterns flagged by our compliance team
+- Failed payment (returned by your bank)
+- Violation of Afriex terms of service
+Contact support@afriex.co for assistance. Do not create a new account as this may lead to permanent suspension.
+
+How do I reset my password?
+Tap "Forgot Password" on the login screen. Enter your registered email address. Follow the reset link sent to your email. If you don't receive it within 5 minutes, check your spam folder or contact support.
+
+=== REFUNDS AND CANCELLATIONS ===
+
+Can I cancel a transfer?
+Yes, but only if the status is still "Pending" and funds have not yet been sent. In the app, go to Transaction History, select the transfer, and tap "Cancel Transfer." If the cancel button is not available, the transfer has already been processed and cannot be cancelled.
+
+What happens if my transfer fails?
+If a transfer fails, your funds are automatically refunded to your Afriex wallet balance. You will receive a notification. You can then re-initiate the transfer or withdraw the balance to your bank account.
+
+How long does a refund take?
+- Refund to Afriex wallet balance: Immediate (available for your next transfer instantly)
+- Withdrawal from Afriex wallet to your bank account: 1 to 5 business days depending on your bank and country
+
+Can I get a refund for a completed transfer?
+Once a transfer is completed and funds have been received by the recipient, Afriex cannot reverse the transaction. If there was an error (wrong account number, wrong amount), contact support@afriex.co immediately — we can attempt to assist but cannot guarantee recovery of completed transfers.
+
+=== SECURITY ===
+
+Is Afriex safe and licensed?
+Yes. Afriex is:
+- Registered with FinCEN (Financial Crimes Enforcement Network) in the United States as a Money Services Business
+- Compliant with AML (Anti-Money Laundering) and KYC (Know Your Customer) regulations
+- Uses 256-bit SSL/TLS encryption for all data in transit
+- Stores sensitive data encrypted at rest
+- Does not store full card numbers
+
+What should I do if I notice unauthorized transactions?
+1. Immediately contact Afriex support via in-app chat or support@afriex.co
+2. Change your password immediately from the login screen
+3. Enable two-factor authentication (2FA) in your account settings
+4. Contact your bank if your payment method was compromised
+
+Will Afriex ever ask for my password or PIN?
+No. Afriex support will never ask for your password, PIN, or full card number. If someone claiming to be Afriex asks for this information, it is a scam. Report it to support@afriex.co immediately.
+
+=== REFERRALS AND PROMOTIONS ===
+
+Does Afriex have a referral program?
+Yes. You can earn rewards by referring friends to Afriex. Go to the "Refer a Friend" section in the app to get your personal referral link. Both you and the person you refer receive a reward after they complete their first transfer.
+
+How do I apply a promo code?
+Enter your promo code in the "Promotions" section of the app before initiating a transfer. Promo discounts are applied automatically to the fee on your next eligible transfer.
+
+=== CONTACT AND SUPPORT ===
+
+How do I contact Afriex support?
+- In-app chat: Available 24/7 — fastest response for urgent transfer issues
+- Email: support@afriex.co — response within 2 hours for urgent issues, within 24 hours for general inquiries
+- Help Center: Available in the Afriex app under "Help"
+
+Does Afriex have phone support?
+Afriex currently handles all support through in-app chat and email. There is no phone support line. The in-app chat is monitored 24/7 for urgent transfer issues.
+
+What information should I include when contacting support?
+To help us resolve your issue faster, please provide:
+- Your registered email address
+- Your transaction ID (found in Transaction History)
+- The amount sent and destination country
+- A brief description of the issue
